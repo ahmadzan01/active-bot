@@ -1,0 +1,31 @@
+name: Auto Commit
+
+on:
+  schedule:
+    - cron: "0 0,12 * * *"   # runs every day at 00:00 & 12:00 UTC (≈ 2 commits/day)
+    - cron: "0 18 * * *"     # runs at 18:00 UTC too (≈ 3 commits/day)
+  workflow_dispatch:          # lets you trigger manually
+
+permissions:
+  contents: write
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make a tiny change
+        run: |
+          echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> log.txt
+
+      - name: Set author to YOU (so it counts on your graph)
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "181772467+ahmadzan01@users.noreply.github.com"
+
+      - name: Commit & push
+        run: |
+          git add -A
+          git commit -m "chore: auto tick" || echo "No changes"
+          git push
