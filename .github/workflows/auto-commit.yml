@@ -2,8 +2,7 @@ name: Auto Commit
 
 on:
   schedule:
-    - cron: "0 0,12 * * *"   # runs every day at 00:00 & 12:00 UTC (≈ 2 commits/day)
-    - cron: "0 18 * * *"     # runs at 18:00 UTC too (≈ 3 commits/day)
+    - cron: "0 0 * * *"      # runs once each day at 00:00 UTC
   workflow_dispatch:          # lets you trigger manually
 
 permissions:
@@ -15,17 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Make a tiny change
-        run: |
-          echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> log.txt
+      - name: Choose today's activity level
+        id: activity
+        run: echo "count=$((RANDOM % 9 + 2))" >> "$GITHUB_OUTPUT"
 
-      - name: Set author to YOU (so it counts on your graph)
+      - name: Make randomized daily commits
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "181772467+ahmadzan01@users.noreply.github.com"
-
-      - name: Commit & push
-        run: |
-          git add -A
-          git commit -m "chore: auto tick" || echo "No changes"
+          for i in $(seq 1 "${{ steps.activity.outputs.count }}"); do
+            echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') commit ${i}/${{ steps.activity.outputs.count }}" >> log.txt
+            git add log.txt
+            git commit -m "chore: auto tick ${i}/${{ steps.activity.outputs.count }}"
+          done
           git push
